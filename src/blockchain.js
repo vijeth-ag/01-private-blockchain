@@ -78,7 +78,7 @@ class Blockchain {
                 newBlock.body = block.body
                 newBlock.height = self.height;                
                 newBlock.time = new Date().getTime().toString().slice(0,-3);
-                newBlock.hash = SHA256(JSON.stringify(block)).toString();
+                newBlock.hash = SHA256(JSON.stringify(newBlock.body)).toString();
                 self.chain.push(newBlock);
                 resolve(newBlock);
             }catch(error){
@@ -131,7 +131,7 @@ class Blockchain {
             let now = moment.unix(parseInt(new Date().getTime().toString().slice(0, -3)));
 
             let timeSinceMessage = now.diff(msgTimeStamp, 'minutes');
-            if (timeSinceMessage > 50) {
+            if (timeSinceMessage > 500) {
                 reject({error: 'Message is older'})
             }else {
                 let messageValidity = bitcoinMessage.verify(message, address, signature, null, true);
@@ -228,26 +228,37 @@ class Blockchain {
      * 2. Each Block should check the with the previousBlockHash
      */
     validateChain() {
+        let promises = [];
         let self = this;
         let errorLog = [];
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {            
             self.chain.forEach(function(block, index){
-                BlockClass.Block.validate(block)
-                .then(function(){
-                    if(block.height !== 0) {
-                        if(block.previousBlockHash === self.chain[index-1].hash){
-                            resolve();
-                        }else{
-                            errorLog.push('Blockchain tampered');
-                            reject();
+                promises.push(
+                    BlockClass.Block.validate(block)
+                    .then(function(){
+                        if(block.height !== 0) {
+                            if(block.previousBlockHash !== self.chain[index-1].hash){
+                                errorLog.push('Blockchain tampered');
+                            }
                         }
-                    }
-                })
-                .catch(function(error){
-                    errorLog.push('Block data tampered');
-                    reject();                    
-                });
+                    })
+                    .catch(function(error){
+                        errorLog.push({
+                            height: block.height,
+                            'error':'Block tampered'
+                        });
+                        resolve(true);
+                    })
+                );            
             });
+            Promise.all(promises).then(() => {
+                    if(errorLog.length > 0){
+                        resolve(false)
+                    } else {
+                        resolve(true);
+                    }
+                }
+            );            
         });
     }
 

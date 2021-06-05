@@ -35,8 +35,7 @@ class Block {
      *  5. Resolve true or false depending if it is valid or not.
      *  Note: to access the class values inside a Promise code you need to create an auxiliary value `let self = this;`
      */
-    static validate() {
-        let self = this;
+    static validate(block) {
         return new Promise((resolve, reject) => {
             // Save in auxiliary variable the current block hash
                                             
@@ -45,19 +44,30 @@ class Block {
             // Returning the Block is not valid
             
             // Returning the Block is valid
-
-            const currentHash = self.hash;
-            const calculatedHash = SHA256(self.body).toString();
-            
-            if(currentHash === undefined || calculatedHash === undefined) {
-                reject({error: 'Hash not found'});
+            if(block.height === 0) {
+                resolve();
             }
+            const currentHash = block.hash;
+            this.getBData(block).then(function(res){
+                ('WHILE VALOIDATING',block.body)
+                const calculatedHash = SHA256(JSON.stringify(block.body)).toString();
+                
+                ('currentHash',currentHash)
+                ('calculatedHash',calculatedHash)
+                
+                if(currentHash === undefined || calculatedHash === undefined) {
+                    reject({error: 'Hash not found'});
+                }
+    
+                if(currentHash === calculatedHash) {
+                    resolve();
+                } else {
+                    reject('Block data tampered')
+                }
+            }).catch(function(error){
+                console.log('error8888',error)
+            })
 
-            if(currentHash === calculatedHash) {
-                resolve(true);
-            } else {
-                resolve(false)
-            }
         });
     }
 
@@ -78,7 +88,7 @@ class Block {
         // Resolve with the data if the object isn't the Genesis block
         return new Promise((resolve, reject) => {
             if(block.height === 0){
-                reject();
+                reject('Genesis Block');
             } else {                
                 var decodeBlockData = hex2ascii(block.body);
                 resolve(decodeBlockData);    
