@@ -48,21 +48,17 @@ class Block {
                 resolve();
             }
             const currentHash = block.hash;
-            this.getBData(block).then(function(res){
-                const calculatedHash = SHA256(JSON.stringify(block)).toString();                
+            const calculatedHash = SHA256(JSON.stringify(block)).toString();                
                 
-                if(currentHash === undefined || calculatedHash === undefined) {
-                    reject({error: 'Hash not found'});
-                }
-    
-                if(currentHash === calculatedHash) {
-                    resolve();
-                } else {
-                    reject('Block data tampered')
-                }
-            }).catch(function(error){
-                console.log('error',error)
-            })
+            if(currentHash === undefined || calculatedHash === undefined) {
+                reject({error: 'Hash not found'});
+            }
+
+            if(currentHash === calculatedHash) {
+                resolve();
+            } else {
+                reject('Block data tampered')
+            }
 
         });
     }
