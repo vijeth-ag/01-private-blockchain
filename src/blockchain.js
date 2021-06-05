@@ -69,22 +69,31 @@ class Blockchain {
         let self = this;
         return new Promise(async (resolve, reject) => {
             
-            try{
-                var newBlock = {};
-                if(self.height >= 0) {
-                    newBlock.previousBlockHash = self.chain[self.chain.length-1].hash;
+            this.validateChain().then(function(isValid){
+                if(isValid) {
+                    try{
+                        var newBlock = {};
+                        if(self.height >= 0) {
+                            newBlock.previousBlockHash = self.chain[self.chain.length-1].hash;
+                        }
+                        self.height++;
+                        newBlock.body = block.body
+                        newBlock.height = self.height;                
+                        newBlock.time = new Date().getTime().toString().slice(0,-3);
+                        newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+                        self.chain.push(newBlock);
+                        resolve(newBlock);
+                    }catch(error){
+                        console.error(error);
+                        reject(error);
+                    }                    
+                } else {
+                    reject({error: "Blockchain invalid. Block cannot be added"});
                 }
-                self.height++;
-                newBlock.body = block.body
-                newBlock.height = self.height;                
-                newBlock.time = new Date().getTime().toString().slice(0,-3);
-                newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-                self.chain.push(newBlock);
-                resolve(newBlock);
-            }catch(error){
+            }).catch(function(){
                 console.error(error);
                 reject(error);
-            }
+            })
             
         });
     }
@@ -131,7 +140,7 @@ class Blockchain {
             let now = moment.unix(parseInt(new Date().getTime().toString().slice(0, -3)));
 
             let timeSinceMessage = now.diff(msgTimeStamp, 'minutes');
-            if (timeSinceMessage > 500) {
+            if (timeSinceMessage > 5) {
                 reject({error: 'Message is older'})
             }else {
                 let messageValidity = bitcoinMessage.verify(message, address, signature, null, true);
@@ -179,7 +188,7 @@ class Blockchain {
     getBlockByHeight(height) {
         let self = this;
         return new Promise((resolve, reject) => {
-            let block = self.chain.filter(p => p.height === height)[0];
+            let block = self.chain.filter(obj => obj.height === height);
             if(block){
                 resolve(block);
             } else {
