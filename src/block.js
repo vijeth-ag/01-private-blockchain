@@ -49,11 +49,7 @@ class Block {
             }
             const currentHash = block.hash;
             this.getBData(block).then(function(res){
-                ('WHILE VALOIDATING',block.body)
-                const calculatedHash = SHA256(JSON.stringify(block.body)).toString();
-                
-                ('currentHash',currentHash)
-                ('calculatedHash',calculatedHash)
+                const calculatedHash = SHA256(JSON.stringify(block)).toString();                
                 
                 if(currentHash === undefined || calculatedHash === undefined) {
                     reject({error: 'Hash not found'});
@@ -65,7 +61,7 @@ class Block {
                     reject('Block data tampered')
                 }
             }).catch(function(error){
-                console.log('error8888',error)
+                console.log('error',error)
             })
 
         });
